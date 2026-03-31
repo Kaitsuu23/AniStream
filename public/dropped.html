@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+  <link rel="manifest" href="/img/site.webmanifest" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dropped Project - AniStream</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">⚡ AniStream</a>
+    <button class="hamburger" id="hamburger">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li><a href="/ongoing/">Ongoing</a></li>
+      <li><a href="/completed/">Completed</a></li>
+      <li><a href="/schedule/">Schedule</a></li>
+      <li><a href="/history/">History</a></li>
+    </ul>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cari donghua..." autocomplete="off" />
+      <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+  </nav>
+
+  <div id="app">
+    <div class="container" style="padding:40px 0; text-align:center; color:var(--text2);">
+      Memuat Dropped Project...
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">⚡ AniStream</span>
+        <p>Nonton donghua subtitle Indonesia gratis dan mudah.</p>
+      </div>
+      <div class="footer-az-list">
+        <a href="/az-list/%23" class="footer-az-btn">#</a>
+        <a href="/az-list/a" class="footer-az-btn">A</a>
+        <a href="/az-list/b" class="footer-az-btn">B</a>
+        <a href="/az-list/c" class="footer-az-btn">C</a>
+        <a href="/az-list/d" class="footer-az-btn">D</a>
+        <a href="/az-list/e" class="footer-az-btn">E</a>
+        <a href="/az-list/f" class="footer-az-btn">F</a>
+        <a href="/az-list/g" class="footer-az-btn">G</a>
+        <a href="/az-list/h" class="footer-az-btn">H</a>
+        <a href="/az-list/i" class="footer-az-btn">I</a>
+        <a href="/az-list/j" class="footer-az-btn">J</a>
+        <a href="/az-list/k" class="footer-az-btn">K</a>
+        <a href="/az-list/l" class="footer-az-btn">L</a>
+        <a href="/az-list/m" class="footer-az-btn">M</a>
+        <a href="/az-list/n" class="footer-az-btn">N</a>
+        <a href="/az-list/o" class="footer-az-btn">O</a>
+        <a href="/az-list/p" class="footer-az-btn">P</a>
+        <a href="/az-list/q" class="footer-az-btn">Q</a>
+        <a href="/az-list/r" class="footer-az-btn">R</a>
+        <a href="/az-list/s" class="footer-az-btn">S</a>
+        <a href="/az-list/t" class="footer-az-btn">T</a>
+        <a href="/az-list/u" class="footer-az-btn">U</a>
+        <a href="/az-list/v" class="footer-az-btn">V</a>
+        <a href="/az-list/w" class="footer-az-btn">W</a>
+        <a href="/az-list/x" class="footer-az-btn">X</a>
+        <a href="/az-list/y" class="footer-az-btn">Y</a>
+        <a href="/az-list/z" class="footer-az-btn">Z</a>
+      </div>
+      <div class="footer-copy">© 2026 AniStream. Data dari <a href="https://anichin.moe" target="_blank">Anichin</a>.</div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/app.js"></script>
+  <script src="/js/router.js"></script>
+  <script>
+    initListPage('dropped', 'Dropped Project', '/api/dropped');
+    initSearch();
+    initNav();
+  </script>
+</body>
+</html>

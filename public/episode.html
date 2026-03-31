@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+  <link rel="manifest" href="/img/site.webmanifest" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Episode Player - AniStream</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* ===== EPISODE PAGE ===== */
+    .ep-page { display: grid; grid-template-columns: 1fr 340px; gap: 24px; padding: 20px 0 40px; }
+
+    /* Breadcrumb */
+    .breadcrumb { font-size: 0.8rem; color: var(--text2); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .breadcrumb a { color: var(--text2); text-decoration: none; transition: color .2s; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb span { opacity: .5; }
+
+    /* Title */
+    .ep-page-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 14px; line-height: 1.4; }
+
+    /* Notification banner */
+    .ep-notice {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #7dd3fc;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Player */
+    .player-box {
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6);
+    }
+    .player-box iframe, .player-box video {
+      width: 100%; height: 100%; border: none; display: block;
+    }
+    .player-skeleton {
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* Server selector */
+    .server-section { margin-top: 14px; }
+    .server-label { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 8px; }
+
+    /* Player info box */
+    .player-info-box {
+      margin-top: 14px;
+      background: #c8e6e0;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #1a3a35;
+      font-size: 0.82rem;
+      line-height: 1.7;
+    }
+    .player-info-title { font-weight: 700; margin-bottom: 4px; }
+    .player-info-box p { margin: 0; }
+    .player-info-box strong { font-weight: 700; }
+    .server-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .server-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .server-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+    .server-btn.active { background: #38bdf8; border-color: #38bdf8; color: #000; font-weight: 600; }
+
+    /* Share buttons */
+    .share-row { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .share-label { font-size: 0.8rem; color: var(--text2); }
+    .share-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; text-decoration: none; transition: transform .2s, opacity .2s;
+      border: none; cursor: pointer;
+    }
+    .share-btn:hover { transform: scale(1.15); opacity: .85; }
+    .share-fb { background: #1877f2; }
+    .share-tw { background: #1da1f2; }
+    .share-wa { background: #25d366; }
+    .share-tg { background: #229ed9; }
+
+    /* Prev/Next nav */
+    .ep-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
+    .ep-nav-btn {
+      flex: 1; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text); font-size: 0.85rem; cursor: pointer;
+      transition: all .2s; text-align: center;
+    }
+    .ep-nav-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+    .ep-nav-btn.primary { background: #38bdf8; border-color: #38bdf8; color: #000; font-weight: 600; }
+    .ep-nav-btn.primary:hover { opacity: .85; color: #000; }
+
+    /* Download */
+    .dl-section { margin-top: 16px; }
+    .dl-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .dl-table-title {
+      background: #e8523a; color: #fff; font-size: 0.85rem; font-weight: 700;
+      padding: 10px 14px; text-align: left;
+    }
+    .dl-table-row {
+      display: flex; align-items: center; gap: 0;
+      border-top: 1px solid var(--border);
+      background: var(--card);
+    }
+    .dl-table-row:hover { background: rgba(255,255,255,.04); }
+    .dl-quality {
+      background: #e8523a; color: #fff; font-size: 0.78rem; font-weight: 700;
+      padding: 10px 12px; min-width: 56px; text-align: center; flex-shrink: 0;
+    }
+    .dl-links { display: flex; align-items: center; gap: 0; flex: 1; }
+    .dl-link {
+      padding: 10px 16px; font-size: 0.82rem; color: var(--text2);
+      text-decoration: none; border-left: 1px solid var(--border);
+      transition: color .15s, background .15s;
+    }
+    .dl-link:hover { color: #38bdf8; background: rgba(56,189,248,.06); }
+    .dl-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .dl-btn {
+      padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--card); color: var(--text2); font-size: 0.82rem;
+      text-decoration: none; transition: all .2s;
+    }
+    .dl-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+
+    /* ===== SIDEBAR ===== */
+    .ep-sidebar { display: flex; flex-direction: column; gap: 0; position: sticky; top: 80px; }
+
+    /* Anime info card — horizontal row */
+    .anime-info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px 12px 0 0;
+      padding: 12px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      border-bottom: none;
+    }
+    .anime-info-card.visible { display: flex; }
+    .anime-info-thumb {
+      width: 56px; height: 56px; border-radius: 8px;
+      object-fit: cover; flex-shrink: 0;
+    }
+    .anime-info-body { flex: 1; min-width: 0; }
+    .anime-info-body h3 { font-size: 0.85rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .anime-info-meta { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text2); }
+    .anime-status { color: #38bdf8; font-weight: 600; }
+
+    /* Episode list */
+    .ep-list-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .anime-info-card.visible + .ep-list-box {
+      border-radius: 0 0 12px 12px;
+    }
+    .ep-list-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ep-list-scroll { max-height: 440px; overflow-y: auto; }
+    .ep-list-scroll::-webkit-scrollbar { width: 4px; }
+    .ep-list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+    .ep-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      transition: background .15s;
+      min-height: 90px;
+    }
+    .ep-item:last-child { border-bottom: none; }
+    .ep-item:hover { background: rgba(255,255,255,.05); }
+    .ep-item.active { background: rgba(56,189,248,.08); border-left: 3px solid #38bdf8; padding-left: 7px; }
+    .ep-item-thumb-wrap {
+      position: relative; flex-shrink: 0; width: 110px; height: 70px;
+    }
+    .ep-item-thumb-wrap img {
+      width: 100%; height: 100%; border-radius: 7px; object-fit: cover; object-position: top center; display: block; background: #111;
+    }
+    .ep-item.active .ep-item-thumb-wrap::after {
+      content: '▶';
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.45); border-radius: 7px;
+      font-size: 1.2rem; color: #fff;
+    }
+    .ep-item-info { flex: 1; min-width: 0; }
+    .ep-item-title { font-size: 0.8rem; font-weight: 600; line-height: 1.35; margin-bottom: 5px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .ep-item-meta { font-size: 0.72rem; color: var(--text2); }
+    .ep-item.active .ep-item-title { color: #38bdf8; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .ep-page { grid-template-columns: 1fr; }
+      .ep-sidebar { position: static; }
+      .ep-list-scroll { max-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">⚡ AniStream</a>
+    <button class="hamburger" id="hamburger">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li><a href="/ongoing">Ongoing</a></li>
+      <li><a href="/completed">Completed</a></li>
+      <li><a href="/schedule">Schedule</a></li>
+      <li><a href="/history/">History</a></li>
+    </ul>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cari donghua..." autocomplete="off" />
+      <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+  </nav>
+
+  <div class="container page-fade">
+    <div class="ep-page">
+
+      <!-- LEFT: player + controls -->
+      <div class="ep-main">
+        <div class="breadcrumb">
+          <a href="/">Home</a>
+          <span>›</span>
+          <a href="#" id="bcAnime">Anime</a>
+          <span>›</span>
+          <span id="bcEpisode">Episode</span>
+        </div>
+
+        <div class="ep-page-title" id="epTitle">Memuat...</div>
+
+        <div class="ep-notice">
+          ℹ️ Jika video tidak bisa diputar, coba ganti server lain di bawah.
+        </div>
+
+        <div class="player-box" id="playerWrap">
+          <div class="player-skeleton"></div>
+        </div>
+
+        <!-- Server selector -->
+        <div class="server-section">
+          <div class="server-label">Pilih Server</div>
+          <div class="server-list" id="serverList"></div>
+        </div>
+
+        <!-- Player info -->
+        <div class="player-info-box">
+          <div class="player-info-title">==DESKRIPSI PLAYER==</div>
+          <p><strong>Ok.ru:</strong> Tersedia resolusi 1080p, 720p, dan 360p (Rekomendasi)</p>
+          <p><strong>Dailymotion:</strong> Tersedia resolusi 1080p, 720p, dan 360p (Rekomendasi tp kadang ada Iklan Ngeselin)</p>
+          <p><strong>Rumble:</strong> Tersedia resolusi 1080p. 720p dan 480p (Rekomendasi tapi harus setting DNS)</p>
+          <p><strong>Player lain:</strong> Ada tag [ADS] berarti ada iklan pop up (tidak direkomendasikan).</p>
+          <p>!!! Iklan di dalam player bukan milik admin jadi kami tidak bisa mengaturnya.</p>
+          <p>!!! Demi kenyamanan menonton dan download gunakan browser <strong>Chrome</strong> terbaru.</p>
+          <p>!!! Link download ada di bawah.</p>
+        </div>
+
+        <!-- Prev/Next -->
+        <div class="ep-nav" id="epNav"></div>
+
+        <!-- Download -->
+        <div class="dl-section" id="downloadSection">
+          <div id="downloadList"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: sidebar -->
+      <aside class="ep-sidebar">
+        <!-- Anime info row -->
+        <div class="anime-info-card" id="animeInfoCard">
+          <img class="anime-info-thumb" id="animePoster" src="/img/placeholder.svg" alt="" />
+          <div class="anime-info-body">
+            <h3 id="animeTitle">—</h3>
+            <div class="anime-info-meta">
+              <span class="anime-status" id="animeStatus">Ongoing</span>
+              <span id="animeEpCount"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Episode list -->
+        <div class="ep-list-box">
+          <div class="ep-list-header">📋 Daftar Episode</div>
+          <div class="ep-list-scroll">
+            <div id="episodeList">
+              <div class="skeleton" style="height:64px;margin:8px;border-radius:6px;"></div>
+              <div class="skeleton" style="height:64px;margin:8px;border-radius:6px;"></div>
+              <div class="skeleton" style="height:64px;margin:8px;border-radius:6px;"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">⚡ AniStream</span>
+        <p>Nonton donghua subtitle Indonesia gratis dan mudah.</p>
+      </div>
+      <div class="footer-az-list">
+        <a href="/az-list/%23" class="footer-az-btn">#</a>
+        <a href="/az-list/a" class="footer-az-btn">A</a>
+        <a href="/az-list/b" class="footer-az-btn">B</a>
+        <a href="/az-list/c" class="footer-az-btn">C</a>
+        <a href="/az-list/d" class="footer-az-btn">D</a>
+        <a href="/az-list/e" class="footer-az-btn">E</a>
+        <a href="/az-list/f" class="footer-az-btn">F</a>
+        <a href="/az-list/g" class="footer-az-btn">G</a>
+        <a href="/az-list/h" class="footer-az-btn">H</a>
+        <a href="/az-list/i" class="footer-az-btn">I</a>
+        <a href="/az-list/j" class="footer-az-btn">J</a>
+        <a href="/az-list/k" class="footer-az-btn">K</a>
+        <a href="/az-list/l" class="footer-az-btn">L</a>
+        <a href="/az-list/m" class="footer-az-btn">M</a>
+        <a href="/az-list/n" class="footer-az-btn">N</a>
+        <a href="/az-list/o" class="footer-az-btn">O</a>
+        <a href="/az-list/p" class="footer-az-btn">P</a>
+        <a href="/az-list/q" class="footer-az-btn">Q</a>
+        <a href="/az-list/r" class="footer-az-btn">R</a>
+        <a href="/az-list/s" class="footer-az-btn">S</a>
+        <a href="/az-list/t" class="footer-az-btn">T</a>
+        <a href="/az-list/u" class="footer-az-btn">U</a>
+        <a href="/az-list/v" class="footer-az-btn">V</a>
+        <a href="/az-list/w" class="footer-az-btn">W</a>
+        <a href="/az-list/x" class="footer-az-btn">X</a>
+        <a href="/az-list/y" class="footer-az-btn">Y</a>
+        <a href="/az-list/z" class="footer-az-btn">Z</a>
+      </div>
+      <div class="footer-copy">© 2026 AniStream. Data dari <a href="https://anichin.moe" target="_blank">Anichin</a>.</div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/app.js"></script>
+  <script src="/js/player.js"></script>
+  <script src="/js/router.js"></script>
+  <script>
+    initEpisodePlayer();
+    initSearch();
+    initNav();
+  </script>
+</body>
+</html>

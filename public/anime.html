@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png" />
+  <link rel="manifest" href="/img/site.webmanifest" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anime Detail - AniStream</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* ===== BREADCRUMB ===== */
+    .breadcrumb {
+      font-size: 0.82rem;
+      color: var(--text2);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+    .breadcrumb a { color: var(--text2); transition: color .2s; }
+    .breadcrumb a:hover { color: var(--text); }
+    .breadcrumb span { color: var(--text); }
+
+    /* ===== DETAIL BANNER ===== */
+    .detail-banner-wrap {
+      position: relative;
+      width: 100%;
+      height: 420px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #111;
+    }
+    .detail-banner-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.55);
+      display: block;
+    }
+    .detail-banner-play {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .detail-banner-play-btn {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: 3px solid rgba(255,255,255,0.8);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+      color: #fff;
+      transition: background .2s, transform .2s;
+      backdrop-filter: blur(4px);
+    }
+    .detail-banner-play:hover .detail-banner-play-btn {
+      background: rgba(255,255,255,0.25);
+      transform: scale(1.08);
+    }
+
+    /* ===== DETAIL BODY ===== */
+    .detail-body {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+      padding-top: 0;
+    }
+    .detail-main { min-width: 0; }
+
+    /* Poster + info row */
+    .detail-top {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin-top: -80px;
+      position: relative;
+      z-index: 2;
+      padding: 0 0 20px;
+    }
+    .detail-poster-col {
+      width: 185px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .detail-poster {
+      width: 100%;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.7);
+      border: 2px solid rgba(255,255,255,.1);
+    }
+    .detail-poster img { width: 100%; display: block; }
+    .detail-rating {
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .detail-stars { color: #f5a623; font-size: 1rem; letter-spacing: 2px; margin-top: 2px; }
+
+    .detail-info-col {
+      flex: 1;
+      min-width: 0;
+      padding-top: 82px;
+    }
+    .detail-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .detail-desc {
+      font-size: 0.82rem;
+      color: var(--text2);
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+    .detail-native { font-size: 0.82rem; color: var(--text2); margin-bottom: 10px; }
+
+    /* Meta grid */
+    .detail-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 24px;
+      font-size: 0.8rem;
+      color: var(--text2);
+    }
+    .detail-meta-grid .meta-row { display: flex; align-items: baseline; gap: 6px; }
+    .detail-meta-grid .meta-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #e74c3c; flex-shrink: 0; margin-top: 1px;
+    }
+    .detail-meta-grid .meta-label { color: var(--text2); }
+    .detail-meta-grid .meta-val { color: var(--text); font-weight: 600; }
+
+    /* Genre tags */
+    .detail-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .detail-tag {
+      padding: 5px 14px; border-radius: 6px; font-size: 0.8rem;
+      background: transparent; border: 1px solid rgba(255,255,255,.25);
+      color: var(--text); text-decoration: none; transition: background .2s;
+    }
+    .detail-tag:hover { background: rgba(255,255,255,.1); }
+
+    /* Batch download */
+    .batch-group {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .batch-group-title {
+      background: #e74c3c;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 10px 16px;
+    }
+    .batch-quality-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-top: 1px solid var(--card-border);
+    }
+    .batch-quality-label {
+      background: #e74c3c;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 4px;
+      min-width: 48px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .batch-links { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* ===== EPISODE TABLE ===== */
+    .ep-section { padding: 20px 0 32px; }
+    .ep-section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .ep-count { font-size: 0.82rem; color: var(--text2); }
+
+    .ep-jump-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .ep-jump-btn {
+      background: #e74c3c;
+      border: none; border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      text-align: center; cursor: pointer;
+      transition: opacity .2s;
+      color: #fff;
+    }
+    .ep-jump-btn:hover { opacity: .85; }
+    .ep-jump-btn .ep-jump-label { font-size: 0.78rem; opacity: .9; margin-bottom: 4px; }
+    .ep-jump-btn .ep-jump-val { font-size: 1rem; font-weight: 800; }
+
+    .ep-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    .ep-table thead tr {
+      border-bottom: 2px solid var(--card-border);
+    }
+    .ep-table thead th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .ep-table tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,.05);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .ep-table tbody tr:hover { background: rgba(255,255,255,.04); }
+    .ep-table td { padding: 10px 12px; vertical-align: middle; }
+    .ep-table .td-num { font-weight: 700; color: var(--text); width: 60px; }
+    .ep-table .td-title { color: var(--text2); }
+    .ep-table .td-sub { width: 60px; text-align: center; }
+    .ep-table .td-date { color: var(--text2); white-space: nowrap; width: 160px; }
+    .sub-badge {
+      display: inline-block;
+      background: #f5a623;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .ep-table-wrap {
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ===== SIDEBAR ===== */
+    .detail-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding-top: 0;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .detail-body { grid-template-columns: 1fr; }
+      .detail-sidebar { order: -1; }
+    }
+    @media (max-width: 600px) {
+      .detail-banner-wrap { height: 220px; }
+      .detail-top { margin-top: -50px; }
+      .detail-poster-col { width: 120px; }
+      .detail-info-col { padding-top: 54px; }
+      .detail-title { font-size: 1.1rem; }
+      .ep-grid { grid-template-columns: 1fr; }
+      .detail-meta-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="/" class="logo">⚡ AniStream</a>
+    <button class="hamburger" id="hamburger">☰</button>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li><a href="/ongoing/">Ongoing</a></li>
+      <li><a href="/completed/">Completed</a></li>
+      <li><a href="/schedule/">Schedule</a></li>
+      <li><a href="/history/">History</a></li>
+    </ul>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cari donghua..." autocomplete="off" />
+      <div class="search-dropdown" id="searchDropdown"></div>
+    </div>
+  </nav>
+
+  <div id="app" class="page-fade">
+    <div class="container">
+      <div class="breadcrumb" id="breadcrumb">
+        <a href="/">Home</a> › <span id="breadcrumbTitle">...</span>
+      </div>
+
+      <!-- 2-col layout -->
+      <div class="detail-body">
+        <!-- LEFT: main -->
+        <div class="detail-main">
+          <!-- Banner -->
+          <div class="detail-banner-wrap" id="detailBannerWrap">
+            <img id="detailBannerImg" class="detail-banner-img" src="/img/placeholder.svg" alt="" />
+            <div class="detail-banner-play" id="detailBannerPlay">
+              <div class="detail-banner-play-btn">▶</div>
+            </div>
+          </div>
+
+          <!-- Poster + info -->
+          <div class="detail-top" id="detailTop">
+            <div class="detail-poster-col">
+              <div class="detail-poster">
+                <img id="detailPosterImg" src="/img/placeholder.svg" alt="" onerror="this.src='/img/placeholder.svg'" />
+              </div>
+              <div class="detail-rating" id="detailRating" style="display:none;">
+                <div id="detailRatingVal"></div>
+                <div class="detail-stars" id="detailStars"></div>
+              </div>
+            </div>
+            <div class="detail-info-col" id="detailInfoCol">
+              <div class="skeleton" style="height:28px;width:60%;border-radius:6px;margin-bottom:8px;"></div>
+              <div class="skeleton" style="height:14px;width:80%;border-radius:6px;margin-bottom:8px;"></div>
+              <div class="skeleton" style="height:60px;border-radius:6px;"></div>
+            </div>
+          </div>
+
+          <!-- Synopsis -->
+          <div id="synopsisSection" style="display:none;margin-bottom:8px;">
+            <div class="sidebar-box" style="padding:18px 20px;">
+              <div class="sidebar-title" id="synopsisTitle" style="margin-bottom:12px;"></div>
+              <p id="synopsisText" style="font-size:0.85rem;color:var(--text2);line-height:1.8;"></p>
+            </div>
+          </div>
+
+          <!-- Batch -->
+          <div class="section" id="batchSection" style="display:none;">
+            <div class="section-header">
+              <h2 class="section-title" id="batchTitle">Batch Download</h2>
+            </div>
+            <div id="batchList"></div>
+          </div>
+
+          <!-- Episodes -->
+          <div class="ep-section">
+            <div class="ep-section-header">
+              <h2 class="section-title" id="epSectionTitle">Daftar Episode</h2>
+              <span class="ep-count" id="epCount"></span>
+            </div>
+            <div class="ep-jump-btns" id="epJumpBtns" style="display:none;">
+              <button class="ep-jump-btn" id="epJumpFirst">
+                <div class="ep-jump-label">First Episode</div>
+                <div class="ep-jump-val" id="epJumpFirstVal">Episode 01</div>
+              </button>
+              <button class="ep-jump-btn" id="epJumpLast">
+                <div class="ep-jump-label">New Episode</div>
+                <div class="ep-jump-val" id="epJumpLastVal">Episode 1</div>
+              </button>
+            </div>
+            <div class="ep-table-wrap">
+              <table class="ep-table">
+                <thead>
+                  <tr>
+                    <th>Ep</th>
+                    <th>Title</th>
+                    <th>Sub</th>
+                    <th>Release Date</th>
+                  </tr>
+                </thead>
+                <tbody id="episodeList">
+                  <tr><td colspan="4"><div class="skeleton" style="height:40px;border-radius:4px;"></div></td></tr>
+                  <tr><td colspan="4"><div class="skeleton" style="height:40px;border-radius:4px;margin-top:4px;"></div></td></tr>
+                  <tr><td colspan="4"><div class="skeleton" style="height:40px;border-radius:4px;margin-top:4px;"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: sidebar -->
+        <aside class="detail-sidebar" id="detailSidebar">
+          <!-- Filter Search -->
+          <div class="sidebar-box" style="padding: 20px;">
+            <div class="sidebar-title" style="font-size:1.05rem;margin-bottom:16px;">Filter Search</div>
+            <div class="filter-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+              <select class="filter-select" id="fGenre" multiple data-wide="true" data-cols="4">
+                <option value="">Genre All</option>
+              </select>
+              <select class="filter-select" id="fSeason" multiple data-wide="true" data-cols="4">
+                <option value="">Season All</option>
+              </select>
+              <select class="filter-select" id="fStudio" multiple data-wide="true" data-cols="4">
+                <option value="">Studio All</option>
+              </select>
+              <select class="filter-select" id="fStatus">
+                <option value="">Status All</option>
+              </select>
+              <select class="filter-select" id="fType">
+                <option value="">Type All</option>
+              </select>
+              <select class="filter-select" id="fOrder">
+                <option value="">Order by Default</option>
+              </select>
+            </div>
+            <button class="filter-btn" id="filterSearchBtn">🔍 Search</button>
+          </div>
+
+          <!-- Popular -->
+          <div class="sidebar-box" id="popularBox">
+            <div class="sidebar-title">🔥 Donghua Paling Populer</div>
+            <div class="pop-tabs">
+              <button class="pop-tab active" data-tab="weekly">Weekly</button>
+              <button class="pop-tab" data-tab="monthly">Monthly</button>
+              <button class="pop-tab" data-tab="all">All</button>
+            </div>
+            <div id="popularList">
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:12px;"></div>
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:8px;"></div>
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:8px;"></div>
+            </div>
+          </div>
+
+          <!-- Movie Baru -->
+          <div class="sidebar-box" id="movieSidebarBox">
+            <div class="sidebar-title" style="display:flex;align-items:center;justify-content:space-between;">
+              Movie Baru
+              <a href="/movies/" style="background:#e74c3c;color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:4px;text-decoration:none;">VIEW ALL</a>
+            </div>
+            <div id="movieSidebarList">
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:8px;"></div>
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:8px;"></div>
+              <div class="skeleton" style="height:80px;border-radius:8px;margin-top:8px;"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo">⚡ AniStream</span>
+        <p>Nonton donghua subtitle Indonesia gratis dan mudah.</p>
+      </div>
+      <div class="footer-az-list">
+        <a href="/az-list/%23" class="footer-az-btn">#</a>
+        <a href="/az-list/a" class="footer-az-btn">A</a><a href="/az-list/b" class="footer-az-btn">B</a>
+        <a href="/az-list/c" class="footer-az-btn">C</a><a href="/az-list/d" class="footer-az-btn">D</a>
+        <a href="/az-list/e" class="footer-az-btn">E</a><a href="/az-list/f" class="footer-az-btn">F</a>
+        <a href="/az-list/g" class="footer-az-btn">G</a><a href="/az-list/h" class="footer-az-btn">H</a>
+        <a href="/az-list/i" class="footer-az-btn">I</a><a href="/az-list/j" class="footer-az-btn">J</a>
+        <a href="/az-list/k" class="footer-az-btn">K</a><a href="/az-list/l" class="footer-az-btn">L</a>
+        <a href="/az-list/m" class="footer-az-btn">M</a><a href="/az-list/n" class="footer-az-btn">N</a>
+        <a href="/az-list/o" class="footer-az-btn">O</a><a href="/az-list/p" class="footer-az-btn">P</a>
+        <a href="/az-list/q" class="footer-az-btn">Q</a><a href="/az-list/r" class="footer-az-btn">R</a>
+        <a href="/az-list/s" class="footer-az-btn">S</a><a href="/az-list/t" class="footer-az-btn">T</a>
+        <a href="/az-list/u" class="footer-az-btn">U</a><a href="/az-list/v" class="footer-az-btn">V</a>
+        <a href="/az-list/w" class="footer-az-btn">W</a><a href="/az-list/x" class="footer-az-btn">X</a>
+        <a href="/az-list/y" class="footer-az-btn">Y</a><a href="/az-list/z" class="footer-az-btn">Z</a>
+      </div>
+      <div class="footer-copy">© 2026 AniStream. Data dari <a href="https://anichin.moe" target="_blank">Anichin</a>.</div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+  <script src="/js/app.js"></script>
+  <script src="/js/router.js"></script>
+  <script>
+    initAnimeDetail();
+    initSearch();
+    initNav();
+    initPopularWidget();
+
+    // Movie Baru sidebar
+    (async () => {
+      const container = document.getElementById('movieSidebarList');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/movies?page=1');
+        const data = await res.json();
+        const items = (data.items || []).slice(0, 5);
+        if (!items.length) { container.innerHTML = ''; return; }
+        container.innerHTML = items.map(item => `
+          <div onclick="navigate('/anime/${encodeURIComponent(item.animeId || item.id)}')"
+               style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;">
+            <img src="${item.poster || '/img/placeholder.svg'}" onerror="this.src='/img/placeholder.svg'"
+                 style="width:56px;height:80px;object-fit:cover;border-radius:6px;flex-shrink:0;" />
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.82rem;font-weight:700;line-height:1.3;margin-bottom:4px;">${item.title}</div>
+              ${item.genre ? `<div style="font-size:0.72rem;color:var(--text2);margin-bottom:4px;">Genres: <span style="color:var(--text);">${item.genre}</span></div>` : ''}
+              ${item.episode ? `<div style="font-size:0.72rem;color:var(--text2);">${item.episode}</div>` : ''}
+            </div>
+          </div>`).join('');
+      } catch(e) { container.innerHTML = ''; }
+    })();
+  </script>
+</body>
+</html>
