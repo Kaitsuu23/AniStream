@@ -18,9 +18,12 @@ const headers = {
   'Cache-Control': 'max-age=0',
 };
 
+const PROXY_URL = process.env.CF_WORKER_URL || '';
+
 async function fetchPage(url) {
   try {
-    const res = await axios.get(url, { headers, timeout: 15000 });
+    const fetchUrl = PROXY_URL ? `${PROXY_URL}?url=${encodeURIComponent(url)}` : url;
+    const res = await axios.get(fetchUrl, { headers, timeout: 15000 });
     return cheerio.load(res.data);
   } catch (err) {
     console.error(`Fetch error: ${url}`, err.message);
