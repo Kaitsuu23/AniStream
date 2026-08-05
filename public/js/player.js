@@ -1,3 +1,17 @@
+// CF Worker URL for proxying anichin.moe content (bypasses Vercel streaming limits)
+// Set this to your deployed Cloudflare Worker URL, e.g. https://donghua-proxy.xxx.workers.dev
+const CF_WORKER_URL = window.__CF_WORKER_URL__ || '';
+
+function proxyEmbed(url) {
+  if (CF_WORKER_URL) return `${CF_WORKER_URL}/?url=${encodeURIComponent(url)}`;
+  return `/api/proxy/embed?url=${encodeURIComponent(url)}`;
+}
+
+function proxyStream(url) {
+  if (CF_WORKER_URL) return `${CF_WORKER_URL}/?url=${encodeURIComponent(url)}`;
+  return `/api/proxy/stream?url=${encodeURIComponent(url)}`;
+}
+
 // ===== EPISODE PLAYER =====
 async function initEpisodePlayer() {
   const id = getParam('id');
@@ -175,13 +189,13 @@ function renderPlayer(servers, index) {
 
   if (src.match(/\.(mp4|webm|ogg|m3u8)(\?|$)/i)) {
     // Proxy direct video URLs from anichin.moe to attach correct Referer
-    const videoSrc = src.includes('anichin.moe') ? `/api/proxy/stream?url=${encodeURIComponent(src)}` : src;
+    const videoSrc = src.includes('anichin.moe') ? proxyStream(src) : src;
     wrap.innerHTML = `<video controls autoplay style="width:100%;height:100%;background:#000;"><source src="${videoSrc}" />Browser tidak mendukung video HTML5.</video>`;
   } else {
     // anichin.moe/stream/* is an HTML wrapper page that 403s when loaded from
     // another domain. Proxy it through our server so the correct Referer is sent.
     const iframeSrc = src.includes('anichin.moe/stream') || src.includes('anichin.moe/stream/')
-      ? `/api/proxy/embed?url=${encodeURIComponent(src)}`
+      ? proxyEmbed(src)
       : src;
     wrap.innerHTML = `<iframe src="${iframeSrc}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
       allowfullscreen

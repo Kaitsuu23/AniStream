@@ -18,8 +18,12 @@ const minifyOpts = {
   useShortDoctype: true,
 };
 
+const CF_WORKER_URL = process.env.CF_WORKER_URL || '';
+
 async function sendMinified(res, filePath) {
-  const html = fs.readFileSync(filePath, 'utf8');
+  let html = fs.readFileSync(filePath, 'utf8');
+  // Inject CF Worker URL for proxy routing
+  html = html.replace(/%%CF_WORKER_URL%%/g, CF_WORKER_URL);
   const minified = await minify(html, minifyOpts);
   res.setHeader('Content-Type', 'text/html');
   res.send(minified);

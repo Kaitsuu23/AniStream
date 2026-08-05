@@ -368,6 +368,10 @@
 
   <div class="toast" id="toast"></div>
   <script src="/js/app.js"></script>
+  <script>
+    // Inject CF Worker URL from server env (populated by server.js)
+    window.__CF_WORKER_URL__ = '%%CF_WORKER_URL%%';
+  </script>
   <script src="/js/player.js"></script>
   <script src="/js/router.js"></script>
   <script>
