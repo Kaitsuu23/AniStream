@@ -166,17 +166,26 @@ function renderPlayer(servers, index) {
   const server = servers[index];
   const src = server.iframe || '';
 
+  console.log('🎬 Rendering server:', server.name, '→', src);
+
   if (!src) {
     wrap.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text2);"><p>Server tidak tersedia</p></div>`;
     return;
   }
 
   if (src.match(/\.(mp4|webm|ogg|m3u8)(\?|$)/i)) {
-    wrap.innerHTML = `<video controls autoplay style="width:100%;height:100%;background:#000;"><source src="${src}" />Browser tidak mendukung video HTML5.</video>`;
+    // Proxy direct video URLs from anichin.moe to attach correct Referer
+    const videoSrc = src.includes('anichin.moe') ? `/api/proxy/stream?url=${encodeURIComponent(src)}` : src;
+    wrap.innerHTML = `<video controls autoplay style="width:100%;height:100%;background:#000;"><source src="${videoSrc}" />Browser tidak mendukung video HTML5.</video>`;
   } else {
-    wrap.innerHTML = `<iframe src="${src}" allow="autoplay; fullscreen; picture-in-picture"
-      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
-      referrerpolicy="no-referrer"></iframe>`;
+    // anichin.moe/stream/* is an HTML wrapper page that 403s when loaded from
+    // another domain. Proxy it through our server so the correct Referer is sent.
+    const iframeSrc = src.includes('anichin.moe/stream') || src.includes('anichin.moe/stream/')
+      ? `/api/proxy/embed?url=${encodeURIComponent(src)}`
+      : src;
+    wrap.innerHTML = `<iframe src="${iframeSrc}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+      allowfullscreen
+      referrerpolicy="origin"></iframe>`;
   }
 }
 
