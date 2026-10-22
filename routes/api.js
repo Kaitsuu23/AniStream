@@ -121,7 +121,11 @@ router.get('/schedule', async (req, res) => {
 // When loaded from a different domain the server returns 403.
 // We proxy the HTML on our server (sending the correct Referer) so the
 // browser receives the page as if it came from us directly.
-const ALLOWED_PROXY_HOSTS = ['anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id'];
+const ALLOWED_PROXY_HOSTS = [
+  'anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id', 'anichin.care',
+  // Third-party player wrappers used by anichin that check Referer server-side
+  'nunadrama.sbs', 'anichin.rpmvid.com',
+];
 
 const anichinHeaders = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -171,6 +175,34 @@ router.get('/proxy/embed', async (req, res) => {
     // If this is the anichin-player.web.id page, override its CSS so the player
     // fills the entire iframe viewport (strip body padding/gap, expand .player-wrapper).
     if (targetUrl.hostname === 'anichin-player.web.id') {
+      // Inject script BEFORE any other scripts to spoof domain checks.
+      // The player checks document.referrer and/or allowed domains — override them.
+      const spoofScript = `<script>
+        (function() {
+          // Override referrer so player thinks it was opened from anichin.moe
+          try {
+            Object.defineProperty(document, 'referrer', { get: function() { return 'https://anichin.moe/'; } });
+          } catch(e) {}
+          // Override location.hostname checks
+          var _origHref = window.location.href;
+          try {
+            var loc = window.location;
+            ['hostname','host','origin','href'].forEach(function(k) {
+              try {
+                Object.defineProperty(loc, k, {
+                  get: function() {
+                    if (k === 'hostname' || k === 'host') return 'anichin.moe';
+                    if (k === 'origin') return 'https://anichin.moe';
+                    return _origHref;
+                  }
+                });
+              } catch(e2) {}
+            });
+          } catch(e) {}
+        })();
+      </script>`;
+      html = html.replace('<head>', '<head>' + spoofScript);
+
       const overrideStyle = `<style>
         html,body{margin:0!important;padding:0!important;gap:0!important;
           min-height:100%!important;width:100%!important;height:100%!important;
@@ -188,6 +220,39 @@ router.get('/proxy/embed', async (req, res) => {
   } catch (err) {
     console.error('Proxy embed error:', err.message);
     if (!res.headersSent) res.status(502).send('Upstream error: ' + err.message);
+  }
+});
+
+// Proxy images (poster/thumbnail) — bypasses CDN hotlink protection
+router.get('/proxy/image', async (req, res) => {
+  const target = req.query.url;
+  if (!target) return res.status(400).end();
+
+  let targetUrl;
+  try { targetUrl = new URL(target); } catch { return res.status(400).end(); }
+
+  if (!isAllowedProxyHost(targetUrl.hostname)) return res.status(403).end();
+
+  try {
+    const upstream = await axios.get(targetUrl.toString(), {
+      responseType: 'stream',
+      timeout: 15000,
+      headers: {
+        ...anichinHeaders,
+        'Accept': 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+    });
+
+    res.status(upstream.status);
+    res.setHeader('Content-Type', upstream.headers['content-type'] || 'image/webp');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    if (upstream.headers['content-length']) res.setHeader('Content-Length', upstream.headers['content-length']);
+
+    upstream.data.pipe(res);
+  } catch (err) {
+    console.error('Proxy image error:', err.message);
+    if (!res.headersSent) res.status(502).end();
   }
 });
 

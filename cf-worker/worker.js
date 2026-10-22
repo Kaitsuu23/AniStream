@@ -1,4 +1,4 @@
-const ALLOWED_HOSTS = ['anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id'];
+const ALLOWED_HOSTS = ['anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id', 'anichin.care'];
 
 function isAllowed(hostname) {
   return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith('.' + h));
@@ -66,6 +66,28 @@ export default {
 
       // If anichin-player.web.id page: override CSS so player fills viewport
       if (targetUrl.hostname === 'anichin-player.web.id') {
+        const spoofScript = `<script>
+          (function() {
+            try {
+              Object.defineProperty(document, 'referrer', { get: function() { return 'https://anichin.moe/'; } });
+            } catch(e) {}
+            try {
+              var loc = window.location;
+              ['hostname','host','origin'].forEach(function(k) {
+                try {
+                  Object.defineProperty(loc, k, {
+                    get: function() {
+                      if (k === 'hostname' || k === 'host') return 'anichin.moe';
+                      if (k === 'origin') return 'https://anichin.moe';
+                    }
+                  });
+                } catch(e2) {}
+              });
+            } catch(e) {}
+          })();
+        </script>`;
+        html = html.replace('<head>', '<head>' + spoofScript);
+
         const overrideStyle = `<style>
           html,body{margin:0!important;padding:0!important;gap:0!important;
             min-height:100%!important;width:100%!important;height:100%!important;

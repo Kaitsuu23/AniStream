@@ -12,6 +12,19 @@ function proxyStream(url) {
   return `/api/proxy/stream?url=${encodeURIComponent(url)}`;
 }
 
+// Hosts that must be proxied through our server (they check Referer server-side)
+const PROXY_REQUIRED_HOSTS = [
+  'anichin.moe', 'anichin-player.web.id', 'anichin.care',
+  'nunadrama.sbs', 'anichin.rpmvid.com',
+];
+
+function needsServerProxy(url) {
+  try {
+    const h = new URL(url).hostname;
+    return PROXY_REQUIRED_HOSTS.some(p => h === p || h.endsWith('.' + p));
+  } catch { return false; }
+}
+
 // ===== EPISODE PLAYER =====
 async function initEpisodePlayer() {
   const id = getParam('id');
@@ -189,17 +202,16 @@ function renderPlayer(servers, index) {
 
   if (src.match(/\.(mp4|webm|ogg|m3u8)(\?|$)/i)) {
     // Proxy direct video URLs from anichin.moe to attach correct Referer
-    const videoSrc = src.includes('anichin.moe') ? proxyStream(src) : src;
+    const videoSrc = needsServerProxy(src) ? proxyStream(src) : src;
     wrap.innerHTML = `<video controls autoplay style="width:100%;height:100%;background:#000;"><source src="${videoSrc}" />Browser tidak mendukung video HTML5.</video>`;
   } else {
-    // anichin.moe/stream/* is an HTML wrapper page that 403s when loaded from
-    // another domain. Proxy it through our server so the correct Referer is sent.
-    const iframeSrc = src.includes('anichin.moe/stream') || src.includes('anichin.moe/stream/')
-      ? proxyEmbed(src)
-      : src;
-    wrap.innerHTML = `<iframe src="${iframeSrc}" allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    // For hosts that do server-side Referer check, proxy through our backend.
+    // For third-party players (ok.ru, rumble, etc.), load directly.
+    const iframeSrc = needsServerProxy(src) ? proxyEmbed(src) : src;
+    wrap.innerHTML = `<iframe src="${iframeSrc}"
+      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
       allowfullscreen
-      referrerpolicy="origin"></iframe>`;
+      referrerpolicy="no-referrer"></iframe>`;
   }
 }
 

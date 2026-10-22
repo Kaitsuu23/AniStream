@@ -3,6 +3,19 @@ const cheerio = require('cheerio');
 
 const BASE_URL = 'https://anichin.moe';
 
+// Rewrite image URLs through our proxy so CDN hotlink protection is bypassed.
+// Relative paths (e.g. /wp-content/...) are resolved against BASE_URL first.
+function proxyPoster(url) {
+  if (!url) return url;
+  let absolute = url;
+  if (url.startsWith('/')) {
+    absolute = BASE_URL + url;
+  } else {
+    try { new URL(url); } catch { return url; } // not a valid URL, return as-is
+  }
+  return `/api/proxy/image?url=${encodeURIComponent(absolute)}`;
+}
+
 const headers = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -35,7 +48,7 @@ function parseCard($, el) {
   const $el = $(el);
   const $a = $el.find('a[title]').first();
   const title = $a.attr('title') || $el.find('.tt').first().text().trim() || $el.find('h2').first().text().trim();
-  const poster = $el.find('img').first().attr('src') || $el.find('img').first().attr('data-src') || '';
+  const poster = proxyPoster($el.find('img').first().attr('src') || $el.find('img').first().attr('data-src') || '');
   const link = $a.attr('href') || $el.find('a').first().attr('href') || '';
   const id = link.replace(BASE_URL, '').replace(/^\//, '').replace(/\/$/, '');
   const animeId = id.replace(/-episode-[\d-]+$/i, '');
@@ -62,7 +75,8 @@ async function getHome() {
 
   $('.swiper-slide.item').each((i, el) => {
     const bgStyle = $(el).find('.backdrop').attr('style') || '';
-    const poster = bgStyle.match(/url\(['"]?([^'")\s]+)['"]?\)/)?.[1] || '';
+    const rawPoster = bgStyle.match(/url\(['"]?([^'")\s]+)['"]?\)/)?.[1] || '';
+    const poster = proxyPoster(rawPoster);
     const $titleA = $(el).find('h2 a').first();
     const title = $titleA.attr('data-jtitle') || $titleA.text().trim();
     const link = $titleA.attr('href') || $(el).find('a.watch').attr('href') || '';
@@ -136,7 +150,7 @@ async function getAnimeDetails(id) {
   const $ = await fetchPage(url);
 
   const title = $('h1.entry-title, .entry-title, h1').first().text().trim();
-  const poster = $('.thumb img, .poster img').first().attr('src') || '';
+  const poster = proxyPoster($('.thumb img, .poster img').first().attr('src') || '');
 
   // Ambil semua paragraf synopsis dari entry-content
   const synParts = [];
@@ -376,7 +390,7 @@ async function getPopular() {
       const link = $a.attr('href') || '';
       const id = link.replace(BASE_URL, '').replace(/^\//, '').replace(/\/$/, '');
       const animeId = id.replace(/-episode-[\d-]+$/i, '');
-      const poster = $(el).find('img').first().attr('src') || '';
+      const poster = proxyPoster($(el).find('img').first().attr('src') || '');
       const genres = $(el).find('span a').map((j, g) => $(g).text().trim()).get();
       const rating = $(el).find('.numscore').text().trim();
       const ratingPct = $(el).find('.rtb span').attr('style') || '';
@@ -399,7 +413,7 @@ async function getSchedule() {
       const title = $a.attr('title') || '';
       const link = $a.attr('href') || '';
       const id = link.replace(BASE_URL, '').replace(/^\//, '').replace(/\/$/, '');
-      const poster = $(el).find('img').first().attr('src') || '';
+      const poster = proxyPoster($(el).find('img').first().attr('src') || '');
       const $epx = $(el).find('.epx.cndwn').first();
       const time = $epx.text().trim().replace(/^at\s*/i, '');
       const cndwn = parseInt($epx.attr('data-cndwn') || '0');
