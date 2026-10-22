@@ -35,8 +35,12 @@ const PROXY_URL = process.env.CF_WORKER_URL || '';
 
 async function fetchPage(url) {
   try {
-    const fetchUrl = PROXY_URL ? `${PROXY_URL}?url=${encodeURIComponent(url)}` : url;
-    const res = await axios.get(fetchUrl, { headers, timeout: 15000 });
+    // Use CF Worker when available (Vercel can't reach anichin.moe directly).
+    // ?scrape=1 tells the worker to return plain untouched HTML.
+    const fetchUrl = PROXY_URL
+      ? `${PROXY_URL}?scrape=1&url=${encodeURIComponent(url)}`
+      : url;
+    const res = await axios.get(fetchUrl, { headers, timeout: 30000 });
     return cheerio.load(res.data);
   } catch (err) {
     console.error(`Fetch error: ${url}`, err.message);

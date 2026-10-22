@@ -1,10 +1,28 @@
-const ALLOWED_HOSTS = ['anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id', 'anichin.care'];
+const ALLOWED_HOSTS = [
+  'anichin.moe', 'cdn.anichin.moe', 'anichin-player.web.id', 'anichin.care',
+  'nunadrama.sbs', 'anichin.rpmvid.com',
+];
 
 function isAllowed(hostname) {
   return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith('.' + h));
 }
 
-const UPSTREAM_HEADERS = {
+// Headers for scraping anichin pages (pretend to be a browser from Google)
+const SCRAPE_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+  'Referer': 'https://www.google.com/',
+  'Cache-Control': 'max-age=0',
+  'Upgrade-Insecure-Requests': '1',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'none',
+  'Sec-Fetch-User': '?1',
+};
+
+// Headers for embed/player proxy (must look like coming from anichin.moe)
+const EMBED_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Referer': 'https://anichin.moe/',
   'Origin': 'https://anichin.moe',
@@ -35,18 +53,32 @@ export default {
 
     if (!isAllowed(targetUrl.hostname)) return new Response('Forbidden', { status: 403 });
 
-    // Proxy the request
-    const upstreamRes = await fetch(targetUrl.toString(), {
-      headers: {
-        ...UPSTREAM_HEADERS,
-        // Forward Range header for video seeking
-        ...(request.headers.get('Range') ? { 'Range': request.headers.get('Range') } : {}),
-        'Accept': '*/*',
-      },
-    });
+    // ?scrape=1 → plain HTML proxy for server-side scraping (no DOM rewrites)
+    const isScrape = url.searchParams.get('scrape') === '1';
+
+    // Choose headers based on mode
+    const upstreamHeaders = {
+      ...(isScrape ? SCRAPE_HEADERS : EMBED_HEADERS),
+      ...(request.headers.get('Range') ? { 'Range': request.headers.get('Range') } : {}),
+      ...(!isScrape ? { 'Accept': '*/*' } : {}),
+    };
+
+    const upstreamRes = await fetch(targetUrl.toString(), { headers: upstreamHeaders });
 
     const contentType = upstreamRes.headers.get('Content-Type') || '';
     const isHtml = contentType.includes('text/html');
+
+    // Scrape mode: return plain HTML untouched
+    if (isScrape && isHtml) {
+      const html = await upstreamRes.text();
+      return new Response(html, {
+        status: upstreamRes.status,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
 
     if (isHtml) {
       // ── HTML embed proxy ──────────────────────────────────────────────
@@ -64,7 +96,7 @@ export default {
       // Strip Cloudflare bot-challenge scripts
       html = html.replace(/<script[^>]*cdn-cgi\/challenge-platform[^>]*>[\s\S]*?<\/script>/gi, '');
 
-      // If anichin-player.web.id page: override CSS so player fills viewport
+      // If anichin-player.web.id page: spoof domain + override CSS
       if (targetUrl.hostname === 'anichin-player.web.id') {
         const spoofScript = `<script>
           (function() {
@@ -113,7 +145,6 @@ export default {
         'Access-Control-Allow-Origin': '*',
       });
 
-      // Forward relevant headers
       for (const h of ['Content-Type', 'Content-Length', 'Content-Range', 'Accept-Ranges']) {
         const v = upstreamRes.headers.get(h);
         if (v) headers.set(h, v);
