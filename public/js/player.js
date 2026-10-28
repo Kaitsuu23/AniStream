@@ -1,15 +1,16 @@
 // CF Worker URL for proxying anichin.moe content (bypasses Vercel streaming limits)
 // Set this to your deployed Cloudflare Worker URL, e.g. https://donghua-proxy.xxx.workers.dev
-const CF_WORKER_URL = window.__CF_WORKER_URL__ || '';
+const CF_WORKER_URL = window.CF_WORKER_URL || '';
+const API_BASE = window.API_BASE_URL || '';
 
 function proxyEmbed(url) {
   if (CF_WORKER_URL) return `${CF_WORKER_URL}/?url=${encodeURIComponent(url)}`;
-  return `/api/proxy/embed?url=${encodeURIComponent(url)}`;
+  return API_BASE + `/api/proxy/embed?url=${encodeURIComponent(url)}`;
 }
 
 function proxyStream(url) {
   if (CF_WORKER_URL) return `${CF_WORKER_URL}/?url=${encodeURIComponent(url)}`;
-  return `/api/proxy/stream?url=${encodeURIComponent(url)}`;
+  return API_BASE + `/api/proxy/stream?url=${encodeURIComponent(url)}`;
 }
 
 // Hosts that must be proxied through our server (they check Referer server-side)
@@ -31,7 +32,7 @@ async function initEpisodePlayer() {
   if (!id) return navigate('/');
 
   try {
-    const data = await fetch(`/api/episode/${encodeURIComponent(id)}`).then(r => r.json());
+    const data = await fetch(API_BASE + `/api/episode/${encodeURIComponent(id)}`).then(r => r.json());
 
     if (data.id && data.id !== id) {
       window.history.replaceState(null, '', `/episode/${data.id}`);
@@ -144,7 +145,7 @@ async function initEpisodePlayer() {
     // Try load anime info from parent anime
     const animeId = data.animeId || id.replace(/-episode-[\d-]+$/i, '').replace(/-ep-?\d+.*$/i, '');
     if (animeId) {
-      fetch(`/api/anime/${encodeURIComponent(animeId)}`).then(r => r.json()).then(anime => {
+      fetch(API_BASE + `/api/anime/${encodeURIComponent(animeId)}`).then(r => r.json()).then(anime => {
         const card = document.getElementById('animeInfoCard');
         const poster = document.getElementById('animePoster');
         const animeTitle = document.getElementById('animeTitle');
@@ -153,7 +154,7 @@ async function initEpisodePlayer() {
         const bcAnime = document.getElementById('bcAnime');
 
         if (anime.title && card) {
-          if (poster && anime.poster) poster.src = anime.poster;
+          if (poster && anime.poster) poster.src = apiUrl(anime.poster);
           if (animeTitle) animeTitle.textContent = anime.title;
           if (animeStatus) animeStatus.textContent = anime.status || 'Ongoing';
           if (animeEpCount && data.episodes) animeEpCount.textContent = `${data.episodes.length} / ${anime.episodes?.length || '?'} Eps`;
@@ -162,7 +163,7 @@ async function initEpisodePlayer() {
 
           // Use anime poster for episode thumbnails
           if (anime.poster) {
-            document.querySelectorAll('.ep-item-thumb-wrap img').forEach(img => { img.src = anime.poster; });
+            document.querySelectorAll('.ep-item-thumb-wrap img').forEach(img => { img.src = apiUrl(anime.poster); });
           }
 
           // Update history with full info

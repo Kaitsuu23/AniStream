@@ -1,15 +1,34 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "server.js"
-    }
+  "outputDirectory": "public",
+  "buildCommand": "node build.js",
+  "rewrites": [
+    { "source": "/",              "destination": "/index.html" },
+    { "source": "/ongoing",       "destination": "/ongoing.html" },
+    { "source": "/ongoing/",      "destination": "/ongoing.html" },
+    { "source": "/completed",     "destination": "/completed.html" },
+    { "source": "/completed/",    "destination": "/completed.html" },
+    { "source": "/recent",        "destination": "/recent.html" },
+    { "source": "/recent/",       "destination": "/recent.html" },
+    { "source": "/movies",        "destination": "/movies.html" },
+    { "source": "/movies/",       "destination": "/movies.html" },
+    { "source": "/dropped",       "destination": "/dropped.html" },
+    { "source": "/dropped/",      "destination": "/dropped.html" },
+    { "source": "/schedule",      "destination": "/schedule.html" },
+    { "source": "/schedule/",     "destination": "/schedule.html" },
+    { "source": "/history",       "destination": "/history.html" },
+    { "source": "/history/",      "destination": "/history.html" },
+    { "source": "/filter",        "destination": "/filter.html" },
+    { "source": "/filter/",       "destination": "/filter.html" },
+    { "source": "/az-list",       "destination": "/az.html" },
+    { "source": "/az-list/",      "destination": "/az.html" },
+    { "source": "/genres",        "destination": "/genres.html" },
+    { "source": "/genres/",       "destination": "/genres.html" },
+    { "source": "/search",        "destination": "/search.html" },
+    { "source": "/search/",       "destination": "/search.html" },
+    { "source": "/anime/:id",     "destination": "/anime.html" },
+    { "source": "/episode/:id",   "destination": "/episode.html" },
+    { "source": "/az-list/:letter", "destination": "/az.html" },
+    { "source": "/genres/:id",    "destination": "/genres.html" }
   ]
 }

@@ -56,7 +56,7 @@ const app = document.getElementById('app');
         </div>
       </div>`;
 
-    fetch('/api/home').then(r => r.json()).then(data => {
+    fetch(apiUrl('/api/home')).then(r => r.json()).then(data => {
       if (!data.allFilters) return;
       const maps = {
         'Genre All': 'fGenre',
@@ -124,7 +124,7 @@ const app = document.getElementById('app');
 
     try {
       const sep = apiPath.includes('?') ? '&' : '?';
-      const data = await fetch(`${apiPath}${sep}page=${page}`).then(r => r.json());
+      const data = await fetch(apiUrl(apiPath) + `${sep}page=${page}`).then(r => r.json());
       renderGrid('mainGrid', data.items, type === 'ongoing' || type === 'completed');
       buildPagination(page, data.hasNext, (p) => {
         const u = new URL(window.location.href);
@@ -149,7 +149,7 @@ const app = document.getElementById('app');
       </div>`;
 
     try {
-      const data = await fetch('/api/schedule').then(r => r.json());
+      const data = await fetch(apiUrl('/api/schedule')).then(r => r.json());
       const grid = document.getElementById('scheduleGrid');
       const days = Object.keys(data.schedule);
       if (days.length === 0) { grid.innerHTML = '<p style="color:var(--text2);">Jadwal tidak tersedia.</p>'; return; }
@@ -167,7 +167,7 @@ const app = document.getElementById('app');
               return `
               <div class="card" onclick="navigate('/episode/${encodeURIComponent(a.id)}')">
                 <div class="card-thumb">
-                  <img src="${a.poster || '/img/placeholder.svg'}" alt="${a.title}" loading="lazy" onerror="this.src='/img/placeholder.svg'" />
+                  <img src="${apiUrl(a.poster || '/img/placeholder.svg')}" alt="${a.title}" loading="lazy" onerror="this.src='/img/placeholder.svg'" />
                   <div class="card-overlay"><div class="play-btn">▶</div></div>
                   <span class="sched-badge${isUpcoming ? ' sched-cd' : ''}"
                     data-cndwn="${a.cndwn}" data-scrape="${scrapeTime}"
@@ -231,7 +231,7 @@ const app = document.getElementById('app');
         </div>`;
 
       try {
-        const data = await fetch('/api/home').then(r => r.json());
+        const data = await fetch(apiUrl('/api/home')).then(r => r.json());
         const list = document.getElementById('genreList');
         if (data.genres && data.genres.length > 0) {
           list.innerHTML = data.genres.map(g => `
@@ -258,7 +258,7 @@ const app = document.getElementById('app');
       </div>`;
 
     try {
-      const data = await fetch(`/api/genres/${encodeURIComponent(genreId)}?page=${page}`).then(r => r.json());
+      const data = await fetch(apiUrl(`/api/genres/${encodeURIComponent(genreId)}?page=${page}`)).then(r => r.json());
       const titleEl = document.getElementById('genreTitle');
       if (titleEl && data.genreName) titleEl.textContent = data.genreName;
       renderGrid('mainGrid', data.items);
@@ -321,7 +321,7 @@ const app = document.getElementById('app');
         </div>
       </div>`;
 
-    fetch('/api/home').then(r => r.json()).then(data => {
+    fetch(apiUrl('/api/home')).then(r => r.json()).then(data => {
       if (!data.allFilters) return;
       const maps = { 'Genre All': 'fGenre', 'Season All': 'fSeason', 'Studio All': 'fStudio', 'Status All': 'fStatus', 'Type All': 'fType', 'Order by All': 'fOrder' };
       for (const [key, id] of Object.entries(maps)) {
@@ -354,7 +354,7 @@ const app = document.getElementById('app');
     initPopularWidget();
 
     try {
-      const data = await fetch(`/api/az/${encodeURIComponent(letter)}?page=${page}`).then(r => r.json());
+      const data = await fetch(apiUrl(`/api/az/${encodeURIComponent(letter)}?page=${page}`)).then(r => r.json());
       renderGrid('mainGrid', data.items);
       buildPagination(page, data.hasNext, (p) => {
         window.location.href = `/az-list/${letter === '#' ? '%23' : letter}?page=${p}`;

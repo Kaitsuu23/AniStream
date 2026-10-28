@@ -1,5 +1,12 @@
 // ===== UTILITIES =====
-const API = '/api';
+// Prefix any /api path with the backend base URL (set by config.js at build time).
+function apiUrl(u) {
+  if (typeof window !== 'undefined' && window.API_BASE_URL && u && u.startsWith('/api')) {
+    return window.API_BASE_URL + u;
+  }
+  return u;
+}
+const API = (window.API_BASE_URL || '') + '/api';
 
 async function fetchAPI(endpoint) {
   const res = await fetch(API + endpoint);
@@ -166,7 +173,7 @@ function buildCard(item, forceAnime = false, autoplay = false) {
   const id = item.id || '';
   const animeId = item.animeId || id;
   const title = (item.title || 'Unknown').replace(/\s*episode\s+\d+.*$/i, '').trim();
-  const poster = item.poster || '/img/placeholder.svg';
+  const poster = apiUrl(item.poster || '/img/placeholder.svg');
   const episode = item.episode || '';
   const rating = item.rating || '';
   const genre = item.genre || '';
@@ -225,7 +232,7 @@ function buildHero(items) {
   hero.innerHTML = `
     ${slides.map((item, i) => `
       <div class="hero-slide ${i === 0 ? 'active' : ''}" data-index="${i}">
-        <img src="${item.poster || ''}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
+        <img src="${apiUrl(item.poster || '')}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
         <div class="hero-content">
           <span class="hero-badge">${item.type || 'Donghua'}</span>
           <div class="hero-title">${item.title || ''}</div>
@@ -303,7 +310,7 @@ async function initPopularWidget() {
     container.innerHTML = items.map(item => `
       <div class="pop-item" onclick="navigate('/anime/${encodeURIComponent(item.animeId || item.id)}')">
         <span class="pop-num">${item.num}</span>
-        <img src="${item.poster || '/img/placeholder.svg'}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
+        <img src="${apiUrl(item.poster || '/img/placeholder.svg')}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
         <div class="pop-info">
           <div class="pop-title">${item.title}</div>
           <div class="pop-genres">${item.genres ? item.genres.slice(0,2).join(', ') : ''}</div>
@@ -313,7 +320,7 @@ async function initPopularWidget() {
   }
 
   try {
-    const res = await fetch('/api/popular');
+    const res = await fetch(apiUrl('/api/popular'));
     const data = await res.json();
     popularData = data;
     renderPopular('weekly');
@@ -391,11 +398,11 @@ async function initAnimeDetail() {
 
     // Banner image
     const bannerImg = document.getElementById('detailBannerImg');
-    if (bannerImg && data.poster) { bannerImg.src = data.poster; bannerImg.alt = data.title; }
+    if (bannerImg && data.poster) { bannerImg.src = apiUrl(data.poster); bannerImg.alt = data.title; }
 
     // Poster
     const posterImg = document.getElementById('detailPosterImg');
-    if (posterImg && data.poster) { posterImg.src = data.poster; posterImg.alt = data.title; }
+    if (posterImg && data.poster) { posterImg.src = apiUrl(data.poster); posterImg.alt = data.title; }
 
     // Rating
     if (data.rating) {
@@ -597,7 +604,7 @@ function initSearch() {
         } else {
           dropdown.innerHTML = data.items.slice(0, 8).map(item => `
             <div class="search-dropdown-item" onclick="navigate('/anime/${encodeURIComponent(item.animeId || item.id)}')">
-              <img src="${item.poster}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
+              <img src="${apiUrl(item.poster)}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
               <div class="info">
                 <div class="title">${item.title}</div>
                 <div class="ep">${item.episode || item.type || ''}</div>

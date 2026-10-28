@@ -74,6 +74,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <script src="/js/config.js"></script>
   <script src="/js/app.js"></script>
   <script src="/js/router.js"></script>
   <script>
@@ -93,7 +94,7 @@
       grid.innerHTML = history.map(item => `
         <div class="history-card" onclick="navigate('/episode/${encodeURIComponent(item.id)}')">
           <div class="history-card-thumb">
-            <img src="${item.poster || '/img/placeholder.svg'}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
+            <img src="${apiUrl(item.poster || '/img/placeholder.svg')}" alt="${item.title}" onerror="this.src='/img/placeholder.svg'" />
             <div class="overlay"></div>
             ${item.epNum ? `<span class="history-card-ep">EP ${item.epNum}</span>` : ''}
           </div>
