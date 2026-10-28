@@ -46,15 +46,28 @@ It exposes all `/api/*` endpoints and a `/health` check.
    You can pass a comma-separated list for multiple origins:
    `FRONTEND_URL=https://your-project.vercel.app,https://your-custom-domain.com`
 
-4. **Start the server**:
+4. **Start the server dengan PM2**:
    ```bash
-   node server.js
-   ```
-   Or with PM2 for process management:
-   ```bash
+   # Install PM2 globally kalau belum ada
+   npm install -g pm2
+
+   # Start dengan nama proses
    pm2 start server.js --name anistream-api
+
+   # Simpan daftar proses supaya auto-start setelah reboot
    pm2 save
+
+   # Generate & aktifkan startup script (copy-paste perintah yang dikasih)
    pm2 startup
+   ```
+
+   Perintah PM2 berguna lainnya:
+   ```bash
+   pm2 status              # lihat status semua proses
+   pm2 logs anistream-api  # lihat log real-time
+   pm2 restart anistream-api
+   pm2 stop anistream-api
+   pm2 delete anistream-api
    ```
 
 5. **Health check**:
@@ -63,9 +76,93 @@ It exposes all `/api/*` endpoints and a `/health` check.
    # → {"status":"ok"}
    ```
 
-### Nginx Reverse Proxy (HTTPS)
+---
 
-Point `https://api.yourdomain.com` to the local Node process:
+### Expose ke Internet via Cloudflare Tunnel (tanpa buka port / tanpa domain sendiri)
+
+Cloudflare Tunnel gratis dan tidak perlu domain — Cloudflare kasih subdomain `*.trycloudflare.com`.
+Kalau punya domain sendiri, bisa di-bind juga.
+
+#### Install cloudflared
+
+```bash
+# Ubuntu/Debian
+curl -L https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
+sudo apt update && sudo apt install cloudflared
+```
+
+#### Opsi A — Quick tunnel (tanpa login, dapat subdomain random)
+
+```bash
+cloudflared tunnel --url http://localhost:3000
+```
+
+Output-nya kasih URL seperti `https://something-random.trycloudflare.com`.
+Ini cocok buat testing tapi URL berubah setiap kali restart.
+
+#### Opsi B — Tunnel permanen dengan domain (rekomendasi untuk production)
+
+```bash
+# 1. Login ke Cloudflare (buka browser, authorize)
+cloudflared tunnel login
+
+# 2. Buat tunnel baru
+cloudflared tunnel create anistream-api
+
+# 3. Buat config file di ~/.cloudflared/config.yml
+cat > ~/.cloudflared/config.yml << 'EOF'
+tunnel: anistream-api
+credentials-file: /root/.cloudflared/<TUNNEL-ID>.json
+
+ingress:
+  - hostname: api.yourdomain.com
+    service: http://localhost:3000
+  - service: http_status:404
+EOF
+# Ganti <TUNNEL-ID> dengan ID yang muncul dari step 2
+# Ganti api.yourdomain.com dengan subdomain kamu
+
+# 4. Arahkan DNS — tambah CNAME di Cloudflare Dashboard:
+#    api.yourdomain.com  →  <TUNNEL-ID>.cfargotunnel.com
+# Atau pakai perintah:
+cloudflared tunnel route dns anistream-api api.yourdomain.com
+
+# 5. Jalankan tunnel
+cloudflared tunnel run anistream-api
+```
+
+#### Jalankan cloudflared sebagai service (auto-start dengan PM2)
+
+```bash
+# Tambah cloudflared ke PM2 setelah tunnel dikonfigurasi
+pm2 start "cloudflared tunnel run anistream-api" --name cloudflare-tunnel
+pm2 save
+```
+
+Atau pakai systemd bawaan cloudflared:
+```bash
+sudo cloudflared service install
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+```
+
+#### Update FRONTEND_URL & BACKEND_URL setelah dapat URL tunnel
+
+Setelah tunnel jalan dan kamu dapat URL-nya (misal `https://api.yourdomain.com`):
+
+1. Update `.env` di VPS:
+   ```
+   FRONTEND_URL=https://your-project.vercel.app
+   ```
+2. Update env var `BACKEND_URL` di Vercel Dashboard ke URL tunnel tersebut.
+3. Trigger redeploy Vercel supaya `config.js` di-generate ulang dengan URL baru.
+
+---
+
+### Nginx Reverse Proxy (alternatif tanpa Cloudflare Tunnel)
+
+Kalau VPS punya IP publik dan pakai Nginx + Let's Encrypt:
 
 ```nginx
 server {
@@ -86,7 +183,10 @@ server {
 }
 ```
 
-Use Certbot / Let's Encrypt for free TLS.
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d api.yourdomain.com
+```
 
 ### Files used by the backend
 
