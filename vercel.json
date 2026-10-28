@@ -1,7 +1,9 @@
 {
   "version": 2,
-  "outputDirectory": "public",
+  "framework": null,
+  "installCommand": "npm install",
   "buildCommand": "node build.js",
+  "outputDirectory": "public",
   "rewrites": [
     { "source": "/",              "destination": "/index.html" },
     { "source": "/ongoing",       "destination": "/ongoing.html" },
